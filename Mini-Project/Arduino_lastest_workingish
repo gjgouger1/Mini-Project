@@ -1,0 +1,220 @@
+/* 
+
+SEED lab Fall 2022
+Group 4 - The Third Best Team
+
+The purpose of this code is to control a motor and read its output
+with the attached encoder. A raspberry pi will connect to our arduino 
+via I2C and sned an angle in radians that the motor should move to.
+The Arduino will use a PI controller to move the motor to that position. 
+The arduino will also send position data back to the rasberry pi. 
+
+
+NOTE - This code is woking-ish as of friday (9/30) afternoon, it was not able to send 
+data to the pi, and the return to zero function needs work. 
+
+*/
+
+
+#include "Arduino.h"
+#define ENCODER_OPTIMIZE_INTERRUPTS
+#include <Encoder.h>
+#include <Wire.h>
+#define SLAVE_ADDRESS 0X04
+#define TX_ADDRESS 0x
+
+
+#define pi 3.1415
+#define M1DIR 7       // motor driver shield - motor one direction
+#define M1PWM 9       // motor driver shield - motor one pwm
+#define SF 12         // motor driver shield - status flag
+#define D2 4          // motor driver shield - disable active LOW
+#define period 8     //period in ms 
+
+// varaibles for serial communication
+String InputString = ""; // a string to hold incoming data
+bool StringComplete = false;
+
+float theta = 0;
+float thetaold = 0;
+float thetadot = 0;
+
+
+float setPosition = 0 ;
+float Kp =  3.74;
+float Ki = 0.013;
+float u = 0;
+float umax = 7.6;
+float I = 0;
+int Ts = 0;
+int Tc = millis();
+float e;
+float pwm;
+
+unsigned long t = 0;
+unsigned long told = 0;
+int motorVoltage = 0;
+
+
+int data = 0;
+int number = 0;
+int state = 0;
+int i = 0;
+int txData = 0;
+
+Encoder ENC1(3, 5);       //tells the encoder library that encoder 1 is connected to pins 3 and 5
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  // reserve 200 bytes for the inputString:
+  InputString.reserve(200);
+  //Serial.println("Ready!"); // Let anyone on the other end of the serial line know that Arduino is ready
+  
+  digitalWrite(D2, HIGH);       // turns the disable on the motor shield off 
+  
+  pinMode(M1DIR, OUTPUT);         //input and outputs for the motor shield 
+  pinMode(M1PWM, OUTPUT);
+  pinMode(SF, INPUT);
+  pinMode(D2, OUTPUT);
+
+  digitalWrite(M1DIR,1);
+
+  
+  //initialize i2c as slave
+  Wire.begin(SLAVE_ADDRESS);
+
+  // define callbacks for i2c communication
+  Wire.onReceive(receiveData);
+  //Wire.onRequest(sendData);
+
+
+
+}
+
+void loop() {
+  setPosition = (float)data*pi/2;
+
+  
+//  if (theta < 0.785) txData = 0;
+//  if (theta > 0.785 && theta < 2.356) txData = 1;
+//  if (theta > 2.356 && theta < 3.927) txData = 2;
+//  if (theta > 3.927 && theta < 7) txData = 3;
+//
+//  
+//
+//  
+//  if (millis() % 100) {
+//    Wire.beginTransmission(SLAVE_ADDRESS);
+//    Wire.write(1);
+//    Wire.endTransmission();
+//    Serial.println(txData);
+//  }
+  
+
+  
+  //if (Wire.available())
+  
+   if (StringComplete) {
+       StringComplete = false;
+  }
+
+  /*if (millis() >= 1000) {
+    motorVoltage = 168; //5 (V)
+    analogWrite(M1PWM,motorVoltage); 
+  }*/
+  // Change behavior based on serial input
+  told = t;         //calculates the time between reads 
+  while(millis()<told + period);     //makes sure the period is always 10ms
+  t = millis();
+  
+  thetaold = theta;           //calculates the position of the encoder in radians
+  theta = (float)ENC1.read() * 2 * pi / 3200;
+
+  float deltat = t-told;          //finds the change in time and the change in positon 
+  float deltatheta = theta - thetaold;
+  
+  deltat = deltat/1000;         //converts time from millis to seconds
+  thetadot = deltatheta/deltat;     //angular velocity in radians/second
+
+  e = setPosition - theta;
+  I = I + Ts*e;
+  u = Kp*e;// +Ki*I;
+  if (abs(u) > umax) {
+    u = sgn(u)*umax;
+    I = (u-Kp*e)/Ki;
+  }
+  pwm = (abs(u)/7.6)*255;
+  if(u < 0) {
+    digitalWrite(M1DIR,0);
+  }
+  if(u >= 0){
+    digitalWrite(M1DIR,1);
+  }
+  analogWrite(M1PWM,pwm);
+  Ts = millis() - Tc;
+  Tc = millis();
+  
+  /*if (millis() >= 3000) {   //Halts execution of data sampling
+      Serial.println("Finished");
+  }*/
+  
+  /*Serial.print(t);
+  Serial.print("\t");*/
+  /*
+  Serial.print(e);
+  Serial.print("\t");
+  Serial.print(u);
+  Serial.print("\t");
+  Serial.print(theta);
+  Serial.println("");
+  */
+}
+
+
+/*
+  SerialEvent occurs whenever a new data comes in the
+ hardware serial RX.  This routine is run between each
+ time loop() runs, so using delay inside loop can delay
+ response.  Multiple bytes of data may be available.
+ */
+
+void serialEvent() {
+  String command;
+  if(Serial.available()){
+    command = Serial.readStringUntil('\n');
+    command.trim();
+    if(command.equals("reset")){
+      setPosition = 0;
+      Serial.println("reset done");
+    }
+  }
+}
+
+
+int sgn(float uNumber) {
+  int sign;
+  if (uNumber >= 0) {
+    sign = 1;
+    return sign;
+  }
+
+  else {
+    sign = -1;
+    return sign;
+  } 
+}
+
+
+// callback received for data
+void receiveData() {
+  while(Wire.available()) {
+    data = Wire.read(); 
+  }
+  return data;
+}
+
+void sendData() {
+  Wire.write(txData);
+  //delay(100);
+}
