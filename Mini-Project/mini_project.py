@@ -30,16 +30,45 @@ bus = smbus.SMBus(1)
 # this is the address we set up in the Arduino program
 address = 4
 
+
 def writeNumber(quadrant, offset):
     #bus.write_byte(address, value)
-    bus.write_byte_data(address, offset, quadrant)
+    try:
+        bus.write_byte_data(address,0,quadrant)
+    except:
+        print('io error writing')
+        
+    tpos = ''
+    try:
+        data= ''
+        for i in range(0,4):
+            data += chr(bus.read_byte(address, 0))
+        
+
+       
+        
+    except:
+        print('io error')
+        
+    if (quadrant == 1):
+        tpos = '0'
+    if (quadrant == 2):
+        tpos = 'pi/2'
+    if (quadrant == 3):
+        tpos = 'pi'
+    if (quadrant == 4):
+        tpos = '3pi/2'
+
+    if (starttime % 0.1):
+        lcd.message = 'C: ' + str(data) + '\nE:' + str(tpos + '     ')
+
+        
     return -1
 
-def readNumber(quadrant, offset):
-    #number = bus.read_byte(address)
-    number = bus.read_byte_data(address, offset)
-    print(number)
-    return number
+#def readNumber(quadrant, offset):
+#    #number = bus.read_byte(address)
+#    number = bus.read_byte(address)
+#    return number
 
 lcd.clear()
 # Set LCD color to green
@@ -48,6 +77,8 @@ cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     print("Cannot open camera")
     exit()
+    
+starttime = time.time()
 while True: #infinte loop capturing the given frame
     # Capture frame-by-frame
     ret, frame = cap.read()
@@ -86,30 +117,36 @@ while True: #infinte loop capturing the given frame
 
             quadrant = 0
 
-            if (cX < width/2 and cY < height/2): #lower left
-                quadrant = 1 #pi/2
+            if (cX < width/2 and cY < height/2): #upper left
+                quadrant = 2 #pi/2
             if (cX > width/2 and cY < height/2): #lower right
-                quadrant = 0 #0
-            if (cX < width/2 and cY > height/2): #upper left
-                quadrant = 2 #pi
-            if (cX > width/2 and cY > height/2): #upper right
-                quadrant = 3 #3pi/2
+                quadrant = 1 #0
+            if (cX < width/2 and cY > height/2): #lower left
+                quadrant = 3 #pi
+            if (cX > width/2 and cY > height/2): #lower right
+                quadrant = 4 #3pi/2
+            
+        
+            # Print two line message
             
             writeNumber(quadrant, 0)
-            number = 0 #hardcoded tozero for now
-            #number = readNumber(quadrant, offset)
+
+                
+
             
-            # Print two line message
-            lcd.message = str(quadrant) + "\n" + str(number)
             
             #thiscan be uncommented to print the quadranto nthe aruco
-            #cv2.putText(image, str(quadrant), #put the angle on the marker, showing delta degrees to center
-                #(topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_SIMPLEX,
-                #0.5, (0, 255, 0), 2)
+            cv2.putText(image, str(quadrant), #put the angle on the marker, showing delta degrees to center
+                (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_SIMPLEX,
+                0.5, (0, 255, 0), 2)
         
 
 
-            
+        else:
+            quadrant = 0;
+            if (starttime % 0.1):
+                writeNumber(quadrant, 0)
+                lcd.clear()
     # Display the resulting frame
     cv2.imshow('frame', image)
     if cv2.waitKey(1) == ord('q'):
