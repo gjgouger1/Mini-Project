@@ -37,8 +37,8 @@ float thetadot = 0;
 
 
 float setPosition = 0 ;
-float Kp =  3.8;
-float Ki = 0.0085;
+float Kp =  3.82;
+float Ki = 0.0015;
 float u = 0;
 float umax = 7.6;
 float I = 0;
@@ -142,7 +142,7 @@ void loop() {
   u = Kp*e+Ki*I;
   if (abs(u) > umax) {
     u = sgn(u)*umax;
-    I = (u-Kp*e)/Ki;
+    I = 0;
   }
   pwm = (abs(u)/7.6)*255;
   if(u < 0) {
