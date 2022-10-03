@@ -65,10 +65,7 @@ def writeNumber(quadrant, offset):
         
     return -1
 
-#def readNumber(quadrant, offset):
-#    #number = bus.read_byte(address)
-#    number = bus.read_byte(address)
-#    return number
+
 
 lcd.clear()
 # Set LCD color to green
@@ -133,9 +130,7 @@ while True: #infinte loop capturing the given frame
 
                 
 
-            
-            
-            #thiscan be uncommented to print the quadranto nthe aruco
+
             cv2.putText(image, str(quadrant), #put the angle on the marker, showing delta degrees to center
                 (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_SIMPLEX,
                 0.5, (0, 255, 0), 2)
