@@ -91,29 +91,15 @@ void setup() {
 }
 
 void loop() {
-  if (data != 0){
+  if (data != 0){ 
     setPosition = (float)(data-1)*pi/2;
   }
   
   
-//  if (theta < 0.785) txData = 0;
-//  if (theta > 0.785 && theta < 2.356) txData = 1;
-//  if (theta > 2.356 && theta < 3.927) txData = 2;
-//  if (theta > 3.927 && theta < 7) txData = 3;
-//
-//  
-//
-//  
-//  if (millis() % 100) {
-//    Wire.beginTransmission(SLAVE_ADDRESS);
-//    Wire.write(1);
-//    Wire.endTransmission();
-//    Serial.println(txData);
-//  }
-  
 
   
-  //if (Wire.available())
+
+ 
   
    if (StringComplete) {
        StringComplete = false;
@@ -209,12 +195,12 @@ int sgn(float uNumber) {
 // callback received for data
 void receiveData() {
   while(Wire.available()) {
-    data = Wire.read(); 
+    data = Wire.read(); //read in data from the Rpi
   }
   return data;
 }
 
-void sendData() {
+void sendData() { //this function handles converting our tx data to an acceptable format
  
 
 //  Serial.println(theta);
@@ -225,15 +211,15 @@ void sendData() {
 
   char charArray[string_length+1];
   
-  myNum.toCharArray(charArray, string_length);
-  Serial.println(charArray);
-  Serial.println(charArray[index]);
+  myNum.toCharArray(charArray, string_length); //converts the string of tx data into an array of bytes that can be transmitted for I2C
+  Serial.println(charArray); //just to verify what we are sending
+  Serial.println(charArray[index]); //verifies what we are sending
   
   charArray[string_length + 1] = '\n';
   
-  Wire.write(charArray[index]);
+  Wire.write(charArray[index]); //writes the data over the wire
   ++index;
-  if (index > 3){
+  if (index > 3){ //we are only going to transmit three chars at the end of the day, for example, 0.00, 10.0 etc.
     Wire.write(charArray[string_length + 1]);
 
     index = 0;
