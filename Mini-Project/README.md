@@ -7,12 +7,12 @@ This repository contains all of the code that we have used for the Mini-Project.
               ~(^^^^)~
                ) @@ \~_          |\
               /     | \        \~ /
-             ( 0  0  ) \        | |       Hey
-              ---___/~  \       | |           Hiya
-               /'__/ |   ~-_____/ |                Doin?
+             ( 0  0  ) \        | |     
+              ---___/~  \       | |        
+               /'__/ |   ~-_____/ |          
 o          _   ~----~      ___---~
   O       //     |         |
-         ((~\  _|         -|                Oops! I mean MOOOOOOO
+         ((~\  _|         -|               
    o  O //-_ \/ |        ~  |
         ^   \_ /         ~  |
                |          ~ |
