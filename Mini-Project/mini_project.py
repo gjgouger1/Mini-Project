@@ -1,3 +1,6 @@
+#This code handles the image processing and video capture. This code also handles transfering data from the camera input to the Arduino, in addition it
+#processes data from the arduino in order to print on to the LCD.
+
 import numpy as np
 import cv2
 from cv2 import aruco
@@ -31,10 +34,10 @@ bus = smbus.SMBus(1)
 address = 4
 
 
-def writeNumber(quadrant, offset):
+def writeNumber(quadrant, offset): #function writeNumber to write and read the data over the line, done in the same function so the data does not collide
     #bus.write_byte(address, value)
     try:
-        bus.write_byte_data(address,0,quadrant)
+        bus.write_byte_data(address,0,quadrant) #writing from pi to arduino
     except:
         print('io error writing')
         
@@ -42,7 +45,7 @@ def writeNumber(quadrant, offset):
     try:
         data= ''
         for i in range(0,4):
-            data += chr(bus.read_byte(address, 0))
+            data += chr(bus.read_byte(address, 0)) #reading from arduino one char at a time
         
 
        
@@ -59,8 +62,8 @@ def writeNumber(quadrant, offset):
     if (quadrant == 4):
         tpos = '3pi/2'
 
-    if (starttime % 0.1):
-        lcd.message = 'C: ' + str(data) + '\nE:' + str(tpos + '     ')
+    if (starttime % 0.1): #print to the lcd every 1/10th of a second so we dont have insane lag
+        lcd.message = 'C: ' + str(data) + '\nE:' + str(tpos + '     ') #print to the lcd the given data that we are sending and receiving
 
         
     return -1
@@ -124,8 +127,7 @@ while True: #infinte loop capturing the given frame
                 quadrant = 4 #3pi/2
             
         
-            # Print two line message
-            
+           
             writeNumber(quadrant, 0)
 
                 
