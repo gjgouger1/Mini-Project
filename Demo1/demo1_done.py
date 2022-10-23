@@ -1,3 +1,8 @@
+#This file handles the computer vision portion of Demo 1
+#Meaning that in this file we can take an image input from the camera mounted on our robot
+#and locate an Aruco marker within the field of view of the robot. The result is displayed on the
+#LCD screen and the detection of the Aruco marker is also stated on the LCD screen.
+
 import numpy as np
 import cv2
 from cv2 import aruco
@@ -87,7 +92,7 @@ while True: #infinte loop capturing the given frame
             
             
             
-
+            #calculation of phi
             width_image = frame.shape[1]
             delta_width = ((width_image / 2.0) - cX)
             center_to_edge = (width_image / 2.0)
@@ -95,7 +100,7 @@ while True: #infinte loop capturing the given frame
 
            
         
-            # Print two line message
+            # Print message only once an aruco is initially detected (from frame without to a frame with aruco)
             if (once != 0 and printed == 0):
                 lcd.message = 'Aruco Detected'
                 once = 0
@@ -103,10 +108,10 @@ while True: #infinte loop capturing the given frame
                 time.sleep(1)
                 lcd.clear()
             #writeNumber(phi, 0)
-            phi = round(phi,1)
-            if (time.time() % 1):
+            phi = round(phi,1) #round phi to one decimal
+            if (time.time() % 1): #every one second lets print to the lcd to prevent lag
                 lcd.message = str(phi)
-                #phi_rad = phi * (3.14 / 180) * 100
+                #phi_rad = phi * (3.14 / 180) * 100  THIS CAN BE UNCOMMENTED FOR DEMO 2
                 #bus.write_byte_data(address,0,int(phi_rad))
             
             cv2.putText(image, str(phi), #put the angle on the marker, showing delta degrees to center
@@ -120,7 +125,7 @@ while True: #infinte loop capturing the given frame
     else:
         lcd.clear()
             
-        if ((time.time() - starttime) > 2):
+        if ((time.time() - starttime) > 2): #this resets the flag to print the aruco if an aruco is not on the screen for more than 2 sec
             printed = 0
             #if (starttime % 0.1):
                 #writeNumber(quadrant, 0)
