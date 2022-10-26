@@ -1,3 +1,5 @@
+//in this file we handle the arduino communcation with the motors for our robot. You can see the well commented code for our controllers that allows for us to complete this demo.
+
 #include "Arduino.h"
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include <Encoder.h>
