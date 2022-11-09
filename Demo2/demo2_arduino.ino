@@ -24,8 +24,8 @@ bool StringComplete = false;
 //Variables for forward velocity PI controller 
 float setRhoPrime = 0;
 float finalRhoPrime = 0;
-float kpRhoPrime = 60;
-float kiRhoPrime = 0.1;
+float kpRhoPrime = 30;  //I changed this.. could be tuned
+float kiRhoPrime = 0.01; //tune
 float rhoIntegrator = 0;
 float eRhoPrime;
 
@@ -33,6 +33,7 @@ float eRhoPrime;
 float setPhiPrime;
 float finalPhiPrime;
 float kpPhiPrime = 9.7;
+
 float kiPhiPrime = 0;
 float phiIntegrator = 0;
 float ePhiPrime;
@@ -87,9 +88,9 @@ int Tc = millis();
 float setPhi = 0.4;
 float phi = 0;
 float ePhi = 0;
-float phiKp = 2;
-float phiKi = 0.001;
-float phiKd = 0.01;
+float phiKp = 2.25; //tune
+float phiKi = 0.001; //tune
+float phiKd = 0.01; //tune
 float positionIntegrator = 0;
 float phiDerivative = 0;
 float ePhiPast = 0;
@@ -101,6 +102,11 @@ float distanceMultiplier = 0;
 signed char data = 0;
 float last_data = 0;
 int counter = 0;
+bool marker_was_found = false;
+bool moving_forward = false;
+bool set_distance_once = false;
+bool check_once = false;
+int my_arr[] = {0,0,0,0,0};
 
 //Defines encoders 1 and 2 and their respective pin connections
 Encoder ENC1(3, 5);
@@ -140,9 +146,19 @@ void setup() {
 
 void loop() {
 
-  //Demo2 data trasnfer code
-//  if (Wire.available()){
-  
+  if (started_receiving_data == true){ //if we have data other than 0's
+    
+    setPhi = angle_desired;  //lets set our phi
+    
+    if ((setPhi > 0.01 || setPhi < -0.01) && set_distance_once == false){ //resets encoders if angle >0 and we have not moved forward
+      //could maybe delete set_distance_once?? not sure though. 
+       ENC1.write(0); //resets encoders
+       ENC2.write(0);
+//       phi = 0;
+       once = true; //this should be useless so can prob delete
+    }
+      
+  } //end of started_receiving data if
   
   //MATLAB communication code
   if (StringComplete) {
@@ -178,111 +194,87 @@ void loop() {
   rho = rho + radius*((deltatheta1+deltatheta2)/2);
 
   //Angular position PID controller that uses proportional, integral, and derivative error to reach a set phi (angle in radians) value.
- if (started_receiving_data == true){
-  if (once == false){
-     ENC1.write(0);
-     ENC2.write(0);
-     once = true;
-//     Serial.println("HIIIIIII");
-  }
-  
-   if (ePhi != 0){
-//        Serial.println("angle");
-//        Serial.println(angle_desired);
-//        Serial.println("Phi");
-//        Serial.println(phi);
-        
-//       
-        setPhi = angle_desired;  
-    }  
-  
-  }
+
   
   phi = radius*(theta1-theta2)/distance;
-  /*if (phi > 0.52){
-    phi = 0;
-    ENC1.write(0);
-    ENC2.write(0);
-    setPhiPrime = 0;
-    finalPhiPrime = 0;
-    phiIntegrator = 0;
-    positionIntegrator = 0;
-    phiDerivative = 0;
-    delay(1000);
-    Ts = 0;
-    Tc += 1000;
-  }*/
-//  if (phi % 0.717)
-  if (setPhi == 0){
-    phi = 0;
-  }
-//  setPhi = 3;
-//Serial.println("setphi");
-//
-//Serial.println(setPhi);
-//Serial.println("phi");
-//Serial.println(phi);
- 
+
+
   ePhi = setPhi - phi; //phi error
   
-//  Serial.print(ePhi);
-//  Serial.print('\t');
-  //delta = (float)ePhi % (float)0.5235
- 
-//  Serial.println(ePhi);
-//  Serial.println("ephi");
-  if (ePhi < 0.01 && ePhi > -0.01){
-    
-    if (started_receiving_data == true){
-//        Serial.println("Hello");
+
+  if (ePhi < 0.01 && ePhi > -0.01){ //if we are close to the marker, I think this could also be changed to 'setPhi' instead of ePhi's, worth a shot
+//    Serial.println("in the small ephi if");
+    if (started_receiving_data == true && set_distance_once == false){
 //        ENC1.write(0);
-//        ENC2.write(0);
-        setPhi = angle_desired;
-        setForwardDistance = dist;
-        setRhoPrime = 0.157;
-        finalRhoPrime = 0.157;
-        //Serial.println(dist);
-        //Serial.println(angle_desired);
-        if (dist == 0 && angle_desired == 0){
-          counter++;
-          Serial.println(counter);
-        }
-        if (counter >= 5){
-          //Serial.println("made it inside counter");
-          Serial.println(setPhiPrime);
-          Serial.println(setRhoPrime);
-          counter = 0;
-          //setRhoPrime = 0;
-          //finalRhoPrime = 0;
-          aruco_off_frame = true;
-        }
-    }
+//        ENC2.write(0); // maybe reset encoders? probably dont do this
+
+        setPhi = angle_desired; //set phi (again? might not be needed)
+//        Serial.println(setPhi);
+
+
+        if (setPhi < 0.03 && setPhi > -0.03){ //as long as our set phi is rather small lets move forward, COULD BE TUNED/CHANGED to 0.05, 0.01, etc.
+          
+
+    
+          //if we have not set the distance yet, and we have a dist value greater than 2, lets ride!
+          if (set_distance_once == false && dist > 2){
+            setPhi = 0;
+            setForwardDistance = dist; //setting dist
+//            Serial.println(setForwardDistance);
+            setRhoPrime = 0.157;
+            finalRhoPrime = 0.157;
+          }
+          
+          
+        } //end of set phi if
+       
+    } //end of started receive data and set distance if
+
+
      
 //        Serial.println(setForwardDistance);
 //        Serial.println(setRhoPrime);
 
-    
-    if (started_receiving_data == false){
-//      ePhi = 0;
-//      Serial.println("started receiving data is false");
-      ENC1.write(0);
-      ENC2.write(0);
-      setPhi = 0.4;
-      setForwardDistance = 0;
-      setRhoPrime = 0;
-      finalRhoPrime = 0;
+ 
+
+
+    //THIS AINT BROKE SO PROB NO TOUCHIE.. except for setPHi value??? maybe make it bigger/smaller??
+    if (started_receiving_data == false && set_distance_once == false){ //if we havent started receiving data
+
+      if (marker_was_found == false){ //if a marker is not found yet
+        ENC1.write(0); //reset encoders
+        ENC2.write(0);
+        setPhi = 0.4; //rotate our setPhi again
+        setForwardDistance = 0;
+        setRhoPrime = 0;
+        finalRhoPrime = 0;
+      }
+
+      
     }
-//    ENC1.write(0);
-//    ENC2.write(0);
+
+
+
+
+  } //This is the end of ephi if
+
+
+if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, lets stop and correct our angle to 0
+    setForwardDistance = 0;
+    setRhoPrime = 0;
+    finalRhoPrime = 0;
+    
   }
-  if (aruco_off_frame == true){
-          aruco_off_frame = false;
-//          started_receiving_data = false;
-          Serial.println("hardcoding distance");
-          setForwardDistance = 1;
-          setRhoPrime = 0.157;
-          finalRhoPrime = 0.157;
-        }
+ if (setPhi < 0.01 && setPhi > -0.01 && set_distance_once == false && dist < 2 && dist != 0){ //if we have corrected to zero, then move forward the hardcoded distance
+      Serial.println("made it in!");
+      set_distance_once = true; //no touchie
+      setForwardDistance = 0.43; //yes touchie, could be tuned, this value is really close from what I found
+      setRhoPrime = .10; //I chose small values so it doesn't zoom (hopefully more accurate??)
+      finalRhoPrime = .10;
+    }
+
+
+ //begin all of the controller stuff
   
   positionIntegrator = positionIntegrator + ePhi*Ts;
 
@@ -318,10 +310,10 @@ void loop() {
   phiPrime = radius*(thetadot1 - thetadot2)/distance;
 
   //Conditional for stationary rotation with straight motion afterward 
-  /*if(ePhi <= 0) {
+  if(ePhi <= 0) {
     setRhoPrime = 0.157;
     finalRhoPrime = 0.157;
-  }*/
+  }
 //  Serial.println("forward distance");
 //  Serial.println(setForwardDistance);
 //  Serial.println("Rho Prime");
@@ -490,34 +482,44 @@ int sgn(float uNumber) {
 
 void receiveData(int byteCount){
     i_test = 0;
+   
     while(Wire.available()) {
       
-//      started_receiving_data = true;
-//      Serial.println("BEGINNING LOOP");
-      //last_data = data;
       data_test[i_test % 2] = Wire.read();
-      if (data_test[i_test % 2] != 0){
-        started_receiving_data = true;
-      }
-//      Serial.println("DATA");
-//      Serial.println((data_test[i_test % 2]));
       
-      //temp = s & 0b1000000;
-      //Serial.println(data);
-//      if (ePhi != 0) {
+      my_arr[i_test % 5] = data_test[i_test % 2]; //this populates the array
+      
+      
+      if (dist != 0 && angle_desired != 0){ //if we receive something other than 0
+        started_receiving_data = true;
+        marker_was_found = true;
+
+      }
+
+        
+      
+      if (my_arr[0] == 0 && my_arr[1] == 0 && my_arr[2] == 0 && my_arr[3] == 0 && my_arr[4] == 0){ //I don't think this does jack, but it aint broke so idk
+          started_receiving_data = false; //this statement is needed but the conditional is wack, I was tryna do the last 5 data points being zero means we are probably just not detecting anything
+//          Serial.println("my_arr thing worked");
+      }
+      
+
+      
+  
         if ((i_test % 2) == 0){
-          angle_desired = -1 * (float)data_test[i_test % 2] * 0.003682;
+
+          angle_desired = -1 * (float)data_test[i_test % 2] * 0.003682; //big math boi
+
         }
-//      }
       if ((i_test % 2) == 1){
         dist = data_test[i_test % 2] * 0.1;
       }
       i_test++;
+      
+  } //end of while loop
   
-//      Serial.println(("TEMP"));
+//      Serial.println(("ANGLE"));
 //      Serial.println(angle_desired);
 //      Serial.println(("DIST"));
-//
 //      Serial.println(dist);
-    }
 }
