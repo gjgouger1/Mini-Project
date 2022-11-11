@@ -24,15 +24,15 @@ bool StringComplete = false;
 //Variables for forward velocity PI controller 
 float setRhoPrime = 0;
 float finalRhoPrime = 0;
-float kpRhoPrime = 30;  //I changed this.. could be tuned
-float kiRhoPrime = 0.01; //tune
+float kpRhoPrime = 5;  //I changed this.. could be tuned
+float kiRhoPrime = 1; //tune
 float rhoIntegrator = 0;
 float eRhoPrime;
 
 //Variables for angular velocity PI controller
 float setPhiPrime;
 float finalPhiPrime;
-float kpPhiPrime = 9.7;
+float kpPhiPrime = 10;
 
 float kiPhiPrime = 0;
 float phiIntegrator = 0;
@@ -78,18 +78,20 @@ unsigned long t = 0;
 unsigned long told = 0;
 
 //Variables for use to store time values in P(I)(D) controllers
-int Ts = 0;
-int Tc = millis();
+double Ts = 0;
+double Tc = millis();
 
 //Variable for Demo2 that faciliatates data transfer between Pi and Arduino 
 /*float data = 0;*/
 
 //Variables for angular velocity PID controller
-float setPhi = 0.4;
+float setPhi = 0.6;
 float phi = 0;
 float ePhi = 0;
-float phiKp = 2.25; //tune
-float phiKi = 0.001; //tune
+//2.25
+float phiKp = 6; //tune
+//0.001
+float phiKi = 1; //tune
 float phiKd = 0.01; //tune
 float positionIntegrator = 0;
 float phiDerivative = 0;
@@ -107,6 +109,9 @@ bool moving_forward = false;
 bool set_distance_once = false;
 bool check_once = false;
 int my_arr[] = {0,0,0,0,0};
+bool stop_hardcoding = false;
+bool garbage_value = false;
+int next_state = 0;
 
 //Defines encoders 1 and 2 and their respective pin connections
 Encoder ENC1(3, 5);
@@ -146,19 +151,72 @@ void setup() {
 
 void loop() {
 
-  if (started_receiving_data == true){ //if we have data other than 0's
-    
-    setPhi = angle_desired;  //lets set our phi
-    
-    if ((setPhi > 0.01 || setPhi < -0.01) && set_distance_once == false){ //resets encoders if angle >0 and we have not moved forward
-      //could maybe delete set_distance_once?? not sure though. 
+
+  switch(next_state){
+    case 0:
+      if (abs(ePhi) < 0.02){
+          ENC1.write(0); //reset encoders
+          ENC2.write(0);
+//        ph/iKp = 12;
+          setPhi =  0.600; //rotate our setPhi again
+          setForwardDistance = 0;
+          setRhoPrime = 0;
+          finalRhoPrime = 0;
+      }
+      if (started_receiving_data == true){
+        next_state = 1;
+      }
+      break;
+  
+    case 1:
+      phiKp = 1.5;
+      phiKi = 1;
+      setPhi = angle_desired;
+
+//      if (garbage_value == false){
+//        next_state = 2;
+//      }
+      break;
+    case 2:
+      //some way to move to case 3
+      if ((setPhi > 0.01 || setPhi < -0.01) && set_distance_once == false){
+        next_state = 3;
+      }
+      break;
+    case 3:
        ENC1.write(0); //resets encoders
        ENC2.write(0);
-//       phi = 0;
-       once = true; //this should be useless so can prob delete
-    }
-      
-  } //end of started_receiving data if
+//       next_st/ate = 0;
+       break;
+    
+  }
+
+//  if (started_receiving_data == true){ //if we have data other than 0's
+//    phiKp = 1.5;
+//    phiKi = 0.0001;
+////    if (ePhi > 0.01 || ePhi < -0.01){
+////      setPhi = angle_desired;  //lets set our phi
+////    }
+////    i/f (once == false){
+//      if (garbage_value == false){
+//        Serial.println("setPhi");
+//          setPhi = angle_desired;  //lets set our phi
+//
+//      }
+////    }/
+//
+//    if ((setPhi > 0.01 || setPhi < -0.01) && set_distance_once == false){ //resets encoders if angle >0 and we have not moved forward
+//      //could maybe delete set_distance_once?? not sure though. 
+////      if (once == false){
+//       ENC1.write(0); //resets encoders
+//       ENC2.write(0);
+////       
+//////       phi = 0;
+////       once = true; //this should be useless so can prob delete
+//      }
+//    
+//      
+//  } //end of started_receiving data if
   
   //MATLAB communication code
   if (StringComplete) {
@@ -198,35 +256,55 @@ void loop() {
   
   phi = radius*(theta1-theta2)/distance;
 
-
-  ePhi = setPhi - phi; //phi error
   
+  ePhi = setPhi - phi; //phi error
+//  Serial.println(ePhi);
+//  Serial.println("phi");
+//  Serial.println(phi);
 
-  if (ePhi < 0.01 && ePhi > -0.01){ //if we are close to the marker, I think this could also be changed to 'setPhi' instead of ePhi's, worth a shot
+//  Serial.println(ePhi);
+//  Serial.print("nextstate:");
+//  Serial.print(next_state);
+//  Serial.print("\t ephi");
+//  Serial.print(ePhi);
+//  Serial.print(" \t started_receiving_data:");
+//  Serial.print(started_receiving_data);
+//  Serial.print("\t set dist:");
+//  Serial.print(set_distance_once);
+//  Serial.print("\t dist:");
+//  Serial.println(dist);
+  
+  if (ePhi < 0.03 && ePhi > -0.03){ //if we are close to the marker, I think this could also be changed to 'setPhi' instead of ePhi's, worth a shot
 //    Serial.println("in the small ephi if");
+    
     if (started_receiving_data == true && set_distance_once == false){
 //        ENC1.write(0);
 //        ENC2.write(0); // maybe reset encoders? probably dont do this
 
-        setPhi = angle_desired; //set phi (again? might not be needed)
+//        setPhi = angle_desired; //set phi (again? might not be needed)
 //        Serial.println(setPhi);
 
 
-        if (setPhi < 0.03 && setPhi > -0.03){ //as long as our set phi is rather small lets move forward, COULD BE TUNED/CHANGED to 0.05, 0.01, etc.
+//        if (setPhi < 0.03 && setPhi > -0.03){ //as long as our set phi is rather small lets move forward, COULD BE TUNED/CHANGED to 0.05, 0.01, etc.
           
-
-    
+          
           //if we have not set the distance yet, and we have a dist value greater than 2, lets ride!
-          if (set_distance_once == false && dist > 2){
-            setPhi = 0;
-            setForwardDistance = dist; //setting dist
+//          Serial.println(dist);
+          if (set_distance_once == false && dist > 2 ){
+            
+//            setPhi = 0;
+//            Serial.println("made it to set dist");
+            setForwardDistance = 15; //setting dist
 //            Serial.println(setForwardDistance);
-            setRhoPrime = 0.157;
-            finalRhoPrime = 0.157;
+            setRhoPrime = 1;
+            finalRhoPrime = 1;
+            stop_hardcoding = true;
+            garbage_value = true;
+//            Serial.prin/tln("setting garbage");
           }
           
           
-        } //end of set phi if
+//        } //end of set phi if
        
     } //end of started receive data and set distance if
 
@@ -239,19 +317,20 @@ void loop() {
 
 
     //THIS AINT BROKE SO PROB NO TOUCHIE.. except for setPHi value??? maybe make it bigger/smaller??
-    if (started_receiving_data == false && set_distance_once == false){ //if we havent started receiving data
-
-      if (marker_was_found == false){ //if a marker is not found yet
-        ENC1.write(0); //reset encoders
-        ENC2.write(0);
-        setPhi = 0.4; //rotate our setPhi again
-        setForwardDistance = 0;
-        setRhoPrime = 0;
-        finalRhoPrime = 0;
-      }
-
-      
-    }
+//    if (started_receiving_data == false && set_distance_once == false){ //if we havent started receiving data
+//
+//      if (marker_was_found == false){ //if a marker is not found yet
+//        ENC1.write(0); //reset encoders
+//        ENC2.write(0);
+////        ph/iKp = 12;
+//        setPhi =  0.600; //rotate our setPhi again
+//        setForwardDistance = 0;
+//        setRhoPrime = 0;
+//        finalRhoPrime = 0;
+//      }
+//
+//      
+//    }
 
 
 
@@ -259,24 +338,29 @@ void loop() {
   } //This is the end of ephi if
 
 
-if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, lets stop and correct our angle to 0
+
+if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, let's stop and correct our angle to 0
+//    Serial.println("hello");
     setForwardDistance = 0;
     setRhoPrime = 0;
     finalRhoPrime = 0;
     
   }
- if (setPhi < 0.01 && setPhi > -0.01 && set_distance_once == false && dist < 2 && dist != 0){ //if we have corrected to zero, then move forward the hardcoded distance
+//  setPhi < 0.01 && setPhi > -0.01 && 
+ if (set_distance_once == false && dist < 2 && dist != 0){ //if we have corrected to zero, then move forward the hardcoded distance
       Serial.println("made it in!");
-      set_distance_once = true; //no touchie
-      setForwardDistance = 0.43; //yes touchie, could be tuned, this value is really close from what I found
-      setRhoPrime = .10; //I chose small values so it doesn't zoom (hopefully more accurate??)
-      finalRhoPrime = .10;
+//      set_distance_/once = true; //no touchie
+      //was 0.41
+      setForwardDistance = 0; //yes touchie, could be tuned, this value is really close from what I found
+      setRhoPrime = 0; //I chose small values so it doesn't zoom (hopefully more accurate??) // possibly increase speed
+      finalRhoPrime = 0;
+      eRhoPrime = 0;
     }
 
 
  //begin all of the controller stuff
   
-  positionIntegrator = positionIntegrator + ePhi*Ts;
+  positionIntegrator = positionIntegrator + ePhi*Ts/1000;
 
 //  Serial.print(positionIntegrator);
 //  Serial.print('\t');
@@ -292,12 +376,12 @@ if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, l
 //Serial.print(phiDerivative);
 //  Serial.print('\t');
   
-
+ 
   //Output of the PID controller is fed into the input variable for angular velocity controller
   setPhiPrime = phiKp*ePhi + phiKi*positionIntegrator + phiKd*phiDerivative;
   finalPhiPrime = setPhiPrime;
 
-  if(setPhiPrime > 1) {
+  if(abs(setPhiPrime) > 1) {
     setPhiPrime = 1*sgn(setPhiPrime);
     finalPhiPrime = 1*sgn(setPhiPrime);
     positionIntegrator = 0;
@@ -310,10 +394,11 @@ if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, l
   phiPrime = radius*(thetadot1 - thetadot2)/distance;
 
   //Conditional for stationary rotation with straight motion afterward 
-  if(ePhi <= 0) {
-    setRhoPrime = 0.157;
-    finalRhoPrime = 0.157;
-  }
+  
+//    if (ePhi <= 0) { 
+//    setRhoPrime = 0.157;
+//    finalRhoPrime = 0.157;
+//  }
 //  Serial.println("forward distance");
 //  Serial.println(setForwardDistance);
 //  Serial.println("Rho Prime");
@@ -342,35 +427,36 @@ if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, l
 
   
   //Conditional for travelling along an arc with straight motion afterward or just straight motion (if setPhi is set equal to zero)
-  if ((ePhi <= 0) && (setRhoPrime != 0)) {
+//  if ((ePhi <= 0) && (setRhoPrime != 0)) {
+//
+//      //Converts meters to feet
+////      setForwardDistance = 0;
+//
+//      //setForwardDistance = 1*0.305*2;
+//
+//      //Multipliers used are for tuning motion based on experiments with varying set meter distances
+//      if (setForwardDistance <= 1) {
+//
+//        distanceMultiplier = 0.96;
+//        
+//      }
+//
+//      if ((setForwardDistance > 1) && (setForwardDistance <= 2)) {
+//
+//        distanceMultiplier = 0.98;
+//      }
+//
+//      if ((setForwardDistance > 2)&& (setForwardDistance <= 3)) {
+//
+//        distanceMultiplier = 0.98;
+//      }
+//      
+//  }
 
-      //Converts meters to feet
-//      setForwardDistance = 0;
-
-      //setForwardDistance = 1*0.305*2;
-
-      //Multipliers used are for tuning motion based on experiments with varying set meter distances
-      if (setForwardDistance <= 1) {
-
-        distanceMultiplier = 0.96;
-        
-      }
-
-      if ((setForwardDistance > 1) && (setForwardDistance <= 2)) {
-
-        distanceMultiplier = 0.98;
-      }
-
-      if ((setForwardDistance > 2)&& (setForwardDistance <= 3)) {
-
-        distanceMultiplier = 0.98;
-      }
-      
-  }
-
+  distanceMultiplier = 0.98;
+ 
   //Halts straight motion if rover attains the desired traveled distance 
   if(rho >= distanceMultiplier*setForwardDistance) {
-    //Serial.print("made it");
     setRhoPrime = 0;
     finalRhoPrime = 0;
     setForwardDistance = 0;
@@ -387,8 +473,11 @@ if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, l
   eRhoPrime = setRhoPrime - rhoPrime; //Rhoprime error
   ePhiPrime = setPhiPrime - phiPrime; //Phiprime error
 
-  rhoIntegrator = rhoIntegrator + Ts*eRhoPrime;
-  phiIntegrator = phiIntegrator + Ts*ePhiPrime;
+  Serial.print(eRhoPrime);
+  Serial.print('\t');
+
+  rhoIntegrator = rhoIntegrator + Ts*eRhoPrime/1000;
+  phiIntegrator = phiIntegrator + Ts*ePhiPrime/1000;
 
   //Defines the input voltages for the two motor system
   va = kpRhoPrime*eRhoPrime + kiRhoPrime*rhoIntegrator;
@@ -397,6 +486,22 @@ if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, l
   //Defines the motor 1 and 2 voltages
   v1 = (va + deltaVa)/2;
   v2 = (va - deltaVa)/2;
+
+  
+//  if (started_receiving_data == true && set_distance_once == false && stop_hardcoding == false){
+//    Serial.println("HARDCODING VOLT");
+//      if ((setPhi) < 0.02 && (setPhi) > -0.02){
+//        if (setPhi < 0){
+//          v1 = 0;
+//          v2 = .5;
+//        }
+//        if (setPhi > 0){
+//          v1 = .5;
+//          v2 = 0;
+//        }
+//      }
+//    }
+  
 
 //Serial.println(v2);
   //Antiwindup and saturation for motor 1
@@ -418,6 +523,9 @@ if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, l
   PWM1 = (abs(v1)/7.6)*255;
   PWM2 = (abs(v2)/7.6)*255;
 
+//  Serial.println(PWM1);
+//  Serial.println(PWM2);
+
   //The four if statements ensure the motors spin the correct direction based off the output voltages
   if (v1 < 0) {
       digitalWrite(M1DIR,0);
@@ -437,13 +545,16 @@ if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, l
   }
 
   //Writing the pwm values to the motors
+  
   analogWrite(M1PWM, PWM1);
   analogWrite(M2PWM, PWM2);
+
+//  Serial.println(PWM1);
+//  Serial.println(PWM2);
 
   //Read in time values
   Ts = millis() - Tc;
   Tc = millis();
-
   
   //Serial.print(setRhoPrime);
   //Serial.print("\t");
@@ -508,7 +619,7 @@ void receiveData(int byteCount){
   
         if ((i_test % 2) == 0){
 
-          angle_desired = -1 * (float)data_test[i_test % 2] * 0.003682; //big math boi
+          angle_desired = (-1 * (float)data_test[i_test % 2] * 0.003682)+phi; //big math boi
 
         }
       if ((i_test % 2) == 1){
