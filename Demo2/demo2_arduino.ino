@@ -24,7 +24,7 @@ bool StringComplete = false;
 //Variables for forward velocity PI controller 
 float setRhoPrime = 0;
 float finalRhoPrime = 0;
-float kpRhoPrime = 5;  //I changed this.. could be tuned
+float kpRhoPrime = 5;  //I changed this.. could be tuned. Literally don't touch these two
 float kiRhoPrime = 1; //tune
 float rhoIntegrator = 0;
 float eRhoPrime;
@@ -84,7 +84,7 @@ double Tc = millis();
 //Variable for Demo2 that faciliatates data transfer between Pi and Arduino 
 /*float data = 0;*/
 
-//Variables for angular velocity PID controller
+//Variables for angular position PID controller
 float setPhi = 0.6;
 float phi = 0;
 float ePhi = 0;
@@ -169,8 +169,8 @@ void loop() {
       break;
   
     case 1:
-      phiKp = 1.5;
-      phiKi = 1;
+      phiKp = 10;
+      phiKi = 1.3;
       setPhi = angle_desired;
 
 //      if (garbage_value == false){
@@ -258,21 +258,7 @@ void loop() {
 
   
   ePhi = setPhi - phi; //phi error
-//  Serial.println(ePhi);
-//  Serial.println("phi");
-//  Serial.println(phi);
 
-//  Serial.println(ePhi);
-//  Serial.print("nextstate:");
-//  Serial.print(next_state);
-//  Serial.print("\t ephi");
-//  Serial.print(ePhi);
-//  Serial.print(" \t started_receiving_data:");
-//  Serial.print(started_receiving_data);
-//  Serial.print("\t set dist:");
-//  Serial.print(set_distance_once);
-//  Serial.print("\t dist:");
-//  Serial.println(dist);
   
   if (ePhi < 0.03 && ePhi > -0.03){ //if we are close to the marker, I think this could also be changed to 'setPhi' instead of ePhi's, worth a shot
 //    Serial.println("in the small ephi if");
@@ -347,14 +333,21 @@ if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, l
     
   }
 //  setPhi < 0.01 && setPhi > -0.01 && 
+
  if (set_distance_once == false && dist < 2 && dist != 0){ //if we have corrected to zero, then move forward the hardcoded distance
-      Serial.println("made it in!");
-//      set_distance_/once = true; //no touchie
-      //was 0.41
-      setForwardDistance = 0; //yes touchie, could be tuned, this value is really close from what I found
-      setRhoPrime = 0; //I chose small values so it doesn't zoom (hopefully more accurate??) // possibly increase speed
-      finalRhoPrime = 0;
-      eRhoPrime = 0;
+  
+     set_distance_once = true; //no touchie
+  
+      
+      setForwardDistance = 0.38; //no touchie
+      setRhoPrime = 1; //I chose small values so it doesn't zoom (hopefully more accurate??) // possibly increase speed
+      finalRhoPrime = 1;
+      rho = 0;
+      Serial.print(rho);
+      Serial.println('\t');
+      Serial.print("Hardcoded distance set");
+      Serial.println('\t');
+      
     }
 
 
@@ -399,12 +392,7 @@ if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, l
 //    setRhoPrime = 0.157;
 //    finalRhoPrime = 0.157;
 //  }
-//  Serial.println("forward distance");
-//  Serial.println(setForwardDistance);
-//  Serial.println("Rho Prime");
-//  Serial.println(setRhoPrime);
-//  Serial.println("EPhi");
-//  Serial.println(ePhi);
+
   //Condtional to cause incremental (by tenths) forward velocity increases (slow the step function)
   if(i <= 10) {
     setRhoPrime = setRhoPrime*0.1*i;
@@ -454,13 +442,6 @@ if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, l
 //  }
 
   distanceMultiplier = 0.98;
- 
-  //Halts straight motion if rover attains the desired traveled distance 
-  if(rho >= distanceMultiplier*setForwardDistance) {
-    setRhoPrime = 0;
-    finalRhoPrime = 0;
-    setForwardDistance = 0;
-  }
 
   //Prevents overshoot on the angle turn
   if(ePhi <= 0.005) {
@@ -473,11 +454,18 @@ if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, l
   eRhoPrime = setRhoPrime - rhoPrime; //Rhoprime error
   ePhiPrime = setPhiPrime - phiPrime; //Phiprime error
 
-  Serial.print(eRhoPrime);
-  Serial.print('\t');
 
   rhoIntegrator = rhoIntegrator + Ts*eRhoPrime/1000;
   phiIntegrator = phiIntegrator + Ts*ePhiPrime/1000;
+
+  
+  //Halts straight motion if rover attains the desired traveled distance 
+  if(rho >= distanceMultiplier*setForwardDistance) {
+    //setForwardDistance = 0;
+    eRhoPrime = 0;
+    rhoIntegrator = 0;
+   
+  }
 
   //Defines the input voltages for the two motor system
   va = kpRhoPrime*eRhoPrime + kiRhoPrime*rhoIntegrator;
@@ -503,7 +491,9 @@ if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, l
 //    }
   
 
-//Serial.println(v2);
+Serial.print(setRhoPrime);
+Serial.println('\t');
+
   //Antiwindup and saturation for motor 1
   if (abs(va + deltaVa) > 7.6) {
       v1 = sgn(va+deltaVa)*7.6;
