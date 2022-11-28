@@ -56,7 +56,7 @@ camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75);
 camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25);
 camera.set(cv2.CAP_PROP_EXPOSURE, 40);
 
-markerSize = 5.3 #in cm
+markerSize = 6 #in cm
 mtx = cameraMatrix
 dist = distCoeffs
 # Create vectors we'll be using for rotations and translations for postures
@@ -152,10 +152,10 @@ while True:
 #                    print(markerID)
                     #bus.write_byte_data(address,int(phi_test),int(dist*10),int(markerID)) #phi to send
                     
-                    bus.write_i2c_block_data(address, int(markerID), [int(dist*10),int(phi_test)])
+                    bus.write_i2c_block_data(address, int(markerID), [int(dist*5),int(phi_test)])
                     print([int(phi_test), int(dist*10),int(markerID)])
                 
-                cv2.putText(img, str(markerID), #put the angle on the marker, showing delta degrees to center
+                cv2.putText(img, str(dist*10), #put the angle on the marker, showing delta degrees to center
                     (topLeft[0], topLeft[1]), cv2.FONT_HERSHEY_SIMPLEX,
                     0.5, (0, 255, 0), 2)
                 cv2.putText(img, str(phi), #put the angle on the marker, showing delta degrees to center
