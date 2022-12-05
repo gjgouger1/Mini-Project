@@ -89,9 +89,9 @@ float setPhi = 0.6;
 float phi = 0;
 float ePhi = 0;
 //2.25
-float phiKp = 6; //tune
+float phiKp = 2.7; //tune
 //0.001
-float phiKi = 1; //tune
+float phiKi = 0.6; //tune
 float phiKd = 0.01; //tune
 float positionIntegrator = 0;
 float phiDerivative = 0;
@@ -115,7 +115,7 @@ int next_state = 0;
 int move_state = 0;
 int markerID = 12;
 float starttime = 0;
-int marker_we_are_looking_for = 0;
+int marker_we_are_looking_for = 1;
 
 //Defines encoders 1 and 2 and their respective pin connections
 Encoder ENC1(3, 5);
@@ -157,20 +157,35 @@ void setup() {
 void loop() {
 
 //  markerID_wewa/nt = 0
-  Serial.print("next_state");
-  Serial.print(next_state);
-  Serial.print("move:");
-  Serial.println(move_state);  
+//  Serial.print("next_state: "); 
+//  Serial.print(next_state);
+//  Serial.print('\t');
+//  Serial.print("move: ");
+//  Serial.print(move_state);
+//  Serial.print('\t');
+//  Serial.print("started_receiving_data:  "); 
+//  Serial.println(started_receiving_data);  
+Serial.println(dist);  
   switch(next_state){
     case 0:
       if (abs(ePhi) < 0.02){
           ENC1.write(0); //reset encoders
           ENC2.write(0);
 //        ph/iKp = 12;
-          setPhi =  0.600; //rotate our setPhi again
-          setForwardDistance = 0;
-          setRhoPrime = 0;
-          finalRhoPrime = 0;
+          if (marker_we_are_looking_for != 7){
+            setPhi =  0.600; //rotate our setPhi again
+            setForwardDistance = 0;
+            setRhoPrime = 0;
+            finalRhoPrime = 0;
+          }
+          if (marker_we_are_looking_for >= 7){
+            setPhi =  0; //rotate our setPhi again
+            setForwardDistance = 0;
+            setRhoPrime = 0;
+            finalRhoPrime = 0;
+          }
+          
+          //started_receiving_data = false;
       }
       if (started_receiving_data == true && markerID == marker_we_are_looking_for){ //add markerID if, if(markerID == the one we are looking for) lock into it
         next_state = 1;
@@ -260,18 +275,24 @@ void loop() {
 
   switch(move_state){
     case 0: //this handles 
-      if (abs(ePhi > 0.03) && started_receiving_data == true && set_distance_once == false){
+      if (abs(ePhi < 0.06) && started_receiving_data == true && set_distance_once == false && next_state == 1){
         move_state = 1;
       }
       break;
     case 1: //this handles forward distance
       if (dist > 2){
-        setForwardDistance = 15; //setting dist
+        setForwardDistance = 20; //setting dist
         setRhoPrime = 1;
         finalRhoPrime = 1;
 //        stop_hardcoding = true;
 //        garbage_value = true;
       }
+//      Serial.print("Dist:  ");
+//      Serial.print(dist);
+//      Serial.print("set_dist_once: ");
+//      Serial.print(set_distance_once);
+//      Serial.print("state  ");
+//      Serial.println(move_state);
       if (dist < 2 && set_distance_once == false && dist != 0){
         move_state = 2;
       }
@@ -279,7 +300,8 @@ void loop() {
     case 2: //dead recokiong state
   
       set_distance_once = true; //this might not be needed
-      setForwardDistance = 0.38; //no touchie
+      //was 0.25
+      setForwardDistance = 0.45; //no touchie
       setRhoPrime = 1; //I chose small values so it doesn't zoom (hopefully more accurate??) // possibly increase speed
       finalRhoPrime = 1;
       rho = 0;
@@ -290,6 +312,7 @@ void loop() {
       if (rho >= setForwardDistance){
         starttime = millis();
         marker_we_are_looking_for++;
+        
         move_state = 4;
 //        marke/ridwewant +=1
         //now we are at the marker adn can do this shiz
@@ -297,12 +320,14 @@ void loop() {
       break;
      case 4:
         if ((millis() - starttime) > 5000){
-          set_distance_once = false; //this might not be needed
+          set_distance_once = false; //this might not be needed  
+          //started_receiving_data = false; // new 11/19/2022         
           next_state = 0; //start moving looking for marker
           phi = 0.600; //set to value to move rotationally 
           phiKp = 6; //tune
           phiKi = 1; //tune
           move_state = 0;
+          
         }
        break;
   }
@@ -653,7 +678,7 @@ void receiveData(int byteCount){ // make sure values are being sent to correct v
           angle_desired = (-1 * (float)data_test[i_test] * 0.003682)+phi; //big math boi
       }
       if (i_test % 3 == 1 && markerID == marker_we_are_looking_for){
-        dist = data_test[i_test] * 0.1;
+        dist = data_test[i_test] * 0.2;
       }
       if (i_test % 3 == 0 ){
         markerID = data_test[i_test]; 
@@ -703,8 +728,6 @@ void receiveData(int byteCount){ // make sure values are being sent to correct v
       i_test++;
         
   } //end of while loop
-
-  Serial.println();
   
 //      Serial.println(("ANGLE"));
 //      Serial.println(angle_desired);
