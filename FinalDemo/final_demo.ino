@@ -156,15 +156,7 @@ void setup() {
 
 void loop() {
 
-//  markerID_wewa/nt = 0
-//  Serial.print("next_state: "); 
-//  Serial.print(next_state);
-//  Serial.print('\t');
-//  Serial.print("move: ");
-//  Serial.print(move_state);
-//  Serial.print('\t');
-//  Serial.print("started_receiving_data:  "); 
-//  Serial.println(started_receiving_data);  
+
 Serial.println(dist);  
   switch(next_state){
     case 0:
@@ -197,40 +189,13 @@ Serial.println(dist);
       phiKi = 1.3;
       setPhi = angle_desired;
 
-//      if (garbage_value == false){
-//        next_state = 2;
-//      }
+
       break;
    
     
   }
 
-//  if (started_receiving_data == true){ //if we have data other than 0's
-//    phiKp = 1.5;
-//    phiKi = 0.0001;
-////    if (ePhi > 0.01 || ePhi < -0.01){
-////      setPhi = angle_desired;  //lets set our phi
-////    }
-////    i/f (once == false){
-//      if (garbage_value == false){
-//        Serial.println("setPhi");
-//          setPhi = angle_desired;  //lets set our phi
-//
-//      }
-////    }/
-//
-//    if ((setPhi > 0.01 || setPhi < -0.01) && set_distance_once == false){ //resets encoders if angle >0 and we have not moved forward
-//      //could maybe delete set_distance_once?? not sure though. 
-////      if (once == false){
-//       ENC1.write(0); //resets encoders
-//       ENC2.write(0);
-////       
-//////       phi = 0;
-////       once = true; //this should be useless so can prob delete
-//      }
-//    
-//      
-//  } //end of started_receiving data if
+
   
   //MATLAB communication code
   if (StringComplete) {
@@ -284,15 +249,9 @@ Serial.println(dist);
         setForwardDistance = 20; //setting dist
         setRhoPrime = 1;
         finalRhoPrime = 1;
-//        stop_hardcoding = true;
-//        garbage_value = true;
+
       }
-//      Serial.print("Dist:  ");
-//      Serial.print(dist);
-//      Serial.print("set_dist_once: ");
-//      Serial.print(set_distance_once);
-//      Serial.print("state  ");
-//      Serial.println(move_state);
+
       if (dist < 2 && set_distance_once == false && dist != 0){
         move_state = 2;
       }
@@ -332,95 +291,7 @@ Serial.println(dist);
        break;
   }
   
-//  if (ePhi < 0.03 && ePhi > -0.03){ //if we are close to the marker, I think this could also be changed to 'setPhi' instead of ePhi's, worth a shot
-////    Serial.println("in the small ephi if");
-//    
-//    if (started_receiving_data == true && set_distance_once == false){
-////        ENC1.write(0);
-////        ENC2.write(0); // maybe reset encoders? probably dont do this
-//
-////        setPhi = angle_desired; //set phi (again? might not be needed)
-////        Serial.println(setPhi);
-//
-//
-////        if (setPhi < 0.03 && setPhi > -0.03){ //as long as our set phi is rather small lets move forward, COULD BE TUNED/CHANGED to 0.05, 0.01, etc.
-//          
-//          
-//          //if we have not set the distance yet, and we have a dist value greater than 2, lets ride!
-////          Serial.println(dist);
-//          if (set_distance_once == false && dist > 2 ){
-//            
-////            setPhi = 0;
-////            Serial.println("made it to set dist");
-//            setForwardDistance = 15; //setting dist
-////            Serial.println(setForwardDistance);
-//            setRhoPrime = 1;
-//            finalRhoPrime = 1;
-//            stop_hardcoding = true;
-//            garbage_value = true;
-////            Serial.prin/tln("setting garbage");
-//          }
-//          
-//          
-////        } //end of set phi if
-//       
-//    } //end of started receive data and set distance if
-//
-//
-//     
-////        Serial.println(setForwardDistance);
-////        Serial.println(setRhoPrime);
-//
-// 
-//
-//
-//    //THIS AINT BROKE SO PROB NO TOUCHIE.. except for setPHi value??? maybe make it bigger/smaller??
-////    if (started_receiving_data == false && set_distance_once == false){ //if we havent started receiving data
-////
-////      if (marker_was_found == false){ //if a marker is not found yet
-////        ENC1.write(0); //reset encoders
-////        ENC2.write(0);
-//////        ph/iKp = 12;
-////        setPhi =  0.600; //rotate our setPhi again
-////        setForwardDistance = 0;
-////        setRhoPrime = 0;
-////        finalRhoPrime = 0;
-////      }
-////
-////      
-////    }
-//
-//
-//
-//
-//  } //This is the end of ephi if
-//
-//
-//
-//if (dist < 2 && set_distance_once == false){ //if our distance is less than 2, let's stop and correct our angle to 0
-////    Serial.println("hello");
-//    setForwardDistance = 0;
-//    setRhoPrime = 0;
-//    finalRhoPrime = 0;
-//    
-//  }
-////  setPhi < 0.01 && setPhi > -0.01 && 
-//
-// if (set_distance_once == false && dist < 2 && dist != 0){ //if we have corrected to zero, then move forward the hardcoded distance
-//  
-//     set_distance_once = true; //no touchie
-//  
-//      
-//      setForwardDistance = 0.38; //no touchie
-//      setRhoPrime = 1; //I chose small values so it doesn't zoom (hopefully more accurate??) // possibly increase speed
-//      finalRhoPrime = 1;
-//      rho = 0;
-////      Serial.print(rho);
-////      Serial.println('\t');
-////      Serial.print("Hardcoded distance set");
-////      Serial.println('\t');
-//      
-//    }
+
 
 
  //begin all of the controller stuff
@@ -438,8 +309,7 @@ Serial.println(dist);
     phiDerivative = 0;
   }
 
-//Serial.print(phiDerivative);
-//  Serial.print('\t');
+
   
  
   //Output of the PID controller is fed into the input variable for angular velocity controller
@@ -460,10 +330,7 @@ Serial.println(dist);
 
   //Conditional for stationary rotation with straight motion afterward 
   
-//    if (ePhi <= 0) { 
-//    setRhoPrime = 0.157;
-//    finalRhoPrime = 0.157;
-//  }
+
 
   //Condtional to cause incremental (by tenths) forward velocity increases (slow the step function)
   if(i <= 10) {
@@ -486,32 +353,7 @@ Serial.println(dist);
   }
 
   
-  //Conditional for travelling along an arc with straight motion afterward or just straight motion (if setPhi is set equal to zero)
-//  if ((ePhi <= 0) && (setRhoPrime != 0)) {
-//
-//      //Converts meters to feet
-////      setForwardDistance = 0;
-//
-//      //setForwardDistance = 1*0.305*2;
-//
-//      //Multipliers used are for tuning motion based on experiments with varying set meter distances
-//      if (setForwardDistance <= 1) {
-//
-//        distanceMultiplier = 0.96;
-//        
-//      }
-//
-//      if ((setForwardDistance > 1) && (setForwardDistance <= 2)) {
-//
-//        distanceMultiplier = 0.98;
-//      }
-//
-//      if ((setForwardDistance > 2)&& (setForwardDistance <= 3)) {
-//
-//        distanceMultiplier = 0.98;
-//      }
-//      
-//  }
+
 
   distanceMultiplier = 0.98;
 
@@ -548,19 +390,7 @@ Serial.println(dist);
   v2 = (va - deltaVa)/2;
 
   
-//  if (started_receiving_data == true && set_distance_once == false && stop_hardcoding == false){
-//    Serial.println("HARDCODING VOLT");
-//      if ((setPhi) < 0.02 && (setPhi) > -0.02){
-//        if (setPhi < 0){
-//          v1 = 0;
-//          v2 = .5;
-//        }
-//        if (setPhi > 0){
-//          v1 = .5;
-//          v2 = 0;
-//        }
-//      }
-//    }
+
   
 
 //Serial.print(setRhoPrime);
@@ -585,8 +415,7 @@ Serial.println(dist);
   PWM1 = (abs(v1)/7.6)*255;
   PWM2 = (abs(v2)/7.6)*255;
 
-//  Serial.println(PWM1);
-//  Serial.println(PWM2);
+
 
   //The four if statements ensure the motors spin the correct direction based off the output voltages
   if (v1 < 0) {
@@ -618,9 +447,7 @@ Serial.println(dist);
   Ts = millis() - Tc;
   Tc = millis();
   
-  //Serial.print(setRhoPrime);
-  //Serial.print("\t");
-  //Serial.println("");
+  
 
 }
 
@@ -660,20 +487,10 @@ void receiveData(int byteCount){ // make sure values are being sent to correct v
     while(Wire.available()) {
       
       data_test[i_test] = Wire.read(); // removed mod 2 
-//      Serial.print("data:");
-//      Serial.print(data_test[i_test]);
-//      Serial.print('\t');
-//      angle_desired = (-1 * (float)data_test[i_test][0] * 0.003682)+phi; //big math boi
-//      dist = data_test[i_test][1] * 0.1;
-//      markerID = data_test[i_test][2];
-//      Serial.print("looking:");
-//      Serial.print(marker_we_are_looking_for);
-//      Serial.print('\t');
+
       
       if (i_test % 3 == 2 && markerID == marker_we_are_looking_for){
-//          Serial.print("updating angledesired from id:");
-//          Serial.print(data_test[i_test]);
-//          Serial.println(markerID);
+
           
           angle_desired = (-1 * (float)data_test[i_test] * 0.003682)+phi; //big math boi
       }
@@ -684,16 +501,7 @@ void receiveData(int byteCount){ // make sure values are being sent to correct v
         markerID = data_test[i_test]; 
       }
       
-//      Serial.println("stuff");
-//      Serial.println(angle_desired);
-//      Serial.println(dist);
-//      Serial.print("markerID");
-//      Serial.print(markerID);
-//      Serial.print('\t');
-//      Serial.print("angle");
-//      Serial.print(angle_desired);
-//      Serial.print('\t');
-//      Serial.println(dist);
+
 
       my_arr[i_test % 5] = data_test[i_test % 3]; //this populates the array
       
@@ -708,29 +516,14 @@ void receiveData(int byteCount){ // make sure values are being sent to correct v
       
       if (my_arr[0] == 0 && my_arr[1] == 0 && my_arr[2] == 0 && my_arr[3] == 0 && my_arr[4] == 0){ //I don't think this does jack, but it aint broke so idk
           started_receiving_data = false; //this statement is needed but the conditional is wack, I was tryna do the last 5 data points being zero means we are probably just not detecting anything
-//          Serial.println("my_arr thing worked");
       }
       
 
       
-//      if ((i_test % 3 == 2)){
-//        markerID = data_test[i_test % 3];
-//        
-//      }
-//      if ((i_test % 2) == 0){
-//
-//          angle_desired = (-1 * (float)data_test[i_test % 2] * 0.003682)+phi; //big math boi
-//
-//        }
-//      if ((i_test % 2) == 1){
-//        dist = data_test[i_test % 2] * 0.1;
-//      }
+
       i_test++;
         
   } //end of while loop
   
-//      Serial.println(("ANGLE"));
-//      Serial.println(angle_desired);
-//      Serial.println(("DIST"));
-//      Serial.println(dist);
+
 }
